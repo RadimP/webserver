@@ -51,7 +51,25 @@ static int port = 9000;
         @Override
 
         public void handle(HttpExchange he) throws IOException {
-            String response = "<h1>Server start success if you see this message</h1>" + "<h1>Port: " + port + "</h1>";
+            String response = "<h1>Server start success if you see this message</h1>" + "<h1>Port: " + port + "</h1> <br><button onclick=\"loadDoc()\">Click me</button>\n" +
+"\n" +
+"<p id=\"demo\"></p>\n" +
+"\n" +
+"<script>\n" +
+"function myFunction() {\n" +
+"  document.getElementById(\"demo\").innerHTML = \"Hello World\";\n" +
+"}\n" +
+"function loadDoc() {\n" +
+  "var xhttp = new XMLHttpRequest();\n" +
+  "xhttp.onreadystatechange = function() {\n" +
+   " if (this.readyState == 4 && this.status == 200) {\n" +
+     "document.getElementById(\"demo\").innerHTML = this.responseText;\n" +
+    "}\n" +
+  "};\n" +
+  "xhttp.open(\"GET\", \"http://localhost:9000/echoGet?fname=Henry&lname=Ford\", true);\n" +
+  "xhttp.send();\n" +
+"}\n" +                   
+"</script>";
             he.sendResponseHeaders(200, response.length());
             OutputStream os = he.getResponseBody();
             os.write(response.getBytes());
