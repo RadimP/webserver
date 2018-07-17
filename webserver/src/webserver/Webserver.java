@@ -1,6 +1,7 @@
 package webserver;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,6 +17,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,6 +224,30 @@ sendResponse(he, json);
                     TreeSet<String> str2 = selectAndSortDistinctDates(dates);                
                     json = gson.toJson(str2);
                                     
+                    break;
+              
+                    case "updaterow":
+                    Object[][] items;
+                    Gson gson1 = new GsonBuilder().create();
+                    items = gson1.fromJson((String) values[2], Object[][].class);
+                    System.out.println(Arrays.deepToString(values));
+                  //   System.out.println(Arrays.deepToString(items));   
+            
+          // for(int i=0; i<items.length; i++)   {                      
+            {
+                try {
+                    
+                json=PrepareStatement.executeBatchUpdateEditedValueInDTB((String) values[1], items, (String) values[4], values[3]);
+             //  json=PrepareStatement.executeUpdateEditedValueInDTB((String) values[1], (String) items[i][0], (String)items[i][1], (String) values[4], values[3]);
+                    
+                } catch (SQLException ex) {
+                    Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+                
+         //  }
+                json="update done";   
+                         
                     break;
 
                 default:

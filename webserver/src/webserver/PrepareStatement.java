@@ -29,7 +29,7 @@ public class PrepareStatement {
     public static CachedRowSet executeSelectDatabySelectedValue(String[] namesofcolumnsDTBtable, String nameofDTBtable, String columnnameDTBtable, Object value) throws SQLException {
         String querry = null;
         CachedRowSet crs = null;
-        ResultSet rs= null;
+        ResultSet rs = null;
         RowSetFactory factory = RowSetProvider.newFactory();
         if ("Datum".equals(columnnameDTBtable)) {
             value = HelperMethods.toStandardDatabaseDateString(value.toString());
@@ -38,50 +38,51 @@ public class PrepareStatement {
         try (Connection connection = HelperMethods.getDBConnection(); PreparedStatement st = connection.prepareStatement(sql0_dotaz)) {
             st.setObject(1, value);
             querry = st.toString().split(": ")[1];
-           System.out.println(querry);
+            System.out.println(querry);
             crs = factory.createCachedRowSet();
-         crs.populate(st.executeQuery());
+            crs.populate(st.executeQuery());
             st.closeOnCompletion();
         } catch (SQLException ex) {
             Logger.getLogger(PrepareStatement.class.getName()).log(Level.SEVERE, null, ex);
         }
         return crs;
     }
+
     public static CachedRowSet executeSelectAllDates(String[] namesofcolumnsDTBtable, String nameofDTBtable) throws SQLException {
         String querry = null;
         CachedRowSet crs = null;
-        ResultSet rs= null;
+        ResultSet rs = null;
         RowSetFactory factory = RowSetProvider.newFactory();
         String sql0_dotaz = "select " + HelperMethods.prependTablenameToColumnames(namesofcolumnsDTBtable, nameofDTBtable) + " from " + nameofDTBtable + ";";
         try (Connection connection = HelperMethods.getDBConnection(); PreparedStatement st = connection.prepareStatement(sql0_dotaz)) {
             querry = st.toString().split(": ")[1];
-           System.out.println(querry);
+            System.out.println(querry);
             crs = factory.createCachedRowSet();
-         crs.populate(st.executeQuery());
+            crs.populate(st.executeQuery());
             st.closeOnCompletion();
         } catch (SQLException ex) {
             Logger.getLogger(PrepareStatement.class.getName()).log(Level.SEVERE, null, ex);
         }
         return crs;
     }
-   public static CachedRowSet executeSelectAllDataFromTable(Object value) throws SQLException {
+
+    public static CachedRowSet executeSelectAllDataFromTable(Object value) throws SQLException {
         String querry = null;
         CachedRowSet crs = null;
-        ResultSet rs= null;
+        ResultSet rs = null;
         RowSetFactory factory = RowSetProvider.newFactory();
-        String sql0_dotaz = "select * from " +value;
+        String sql0_dotaz = "select * from " + value;
         try (Connection connection = HelperMethods.getDBConnection(); PreparedStatement st = connection.prepareStatement(sql0_dotaz)) {
             querry = st.toString().split(": ")[1];
             System.out.println(querry);
             crs = factory.createCachedRowSet();
-         crs.populate(st.executeQuery());
+            crs.populate(st.executeQuery());
             st.closeOnCompletion();
         } catch (SQLException ex) {
             Logger.getLogger(PrepareStatement.class.getName()).log(Level.SEVERE, null, ex);
         }
         return crs;
-    } 
-    
+    }
 
     public static String executeSelectDatabySelectedValueUsingOneInnerJoin(String[] namesofcolumnsDTBtable_1, String nameofDTBtable_1, String nameofDTBtable_2, String columnnameDTBtable_1, String columnnameDTBtable_2, String conditioncolumnname, Object value) throws SQLException {
         String querry = null;
@@ -153,6 +154,29 @@ public class PrepareStatement {
         } catch (SQLException ex) {
             Logger.getLogger(PrepareStatement.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return querry;
+    }
+
+    public static String executeBatchUpdateEditedValueInDTB(String nameofDTBtable, Object[][] items, String nameofconditioncolumn, Object valueofcondition) throws SQLException {
+        String querry = null;
+        
+        for(int i=0; i<items.length; i++)   { 
+        if ("Datum".equals(items[i][0])) {
+            items[i][1] = HelperMethods.toStandardDatabaseDateString( items[i][1].toString());
+        }    
+            
+        String sql_dotaz = "UPDATE " + nameofDTBtable + " SET " + items[i][0] + " = ? WHERE " + nameofconditioncolumn + " = ?;";
+        try (Connection connection = HelperMethods.getDBConnection(); PreparedStatement st = connection.prepareStatement(sql_dotaz)) {
+            st.setObject(1, items[i][1]);
+            st.setObject(2, valueofcondition);
+            querry = st.toString().split(": ")[1];
+            System.out.println(querry);
+            st.execute();
+            st.closeOnCompletion();
+
+        } catch (SQLException ex) {
+            Logger.getLogger(PrepareStatement.class.getName()).log(Level.SEVERE, null, ex);
+        }}
         return querry;
     }
 
