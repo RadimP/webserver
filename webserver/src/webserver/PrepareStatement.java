@@ -180,13 +180,14 @@ public class PrepareStatement {
         return querry;
     }
 
-    public static String executeInsertNewItemIntoPredstaveniTable(String date, String idFilm) throws SQLException {
+    public static String executeInsertNewItemIntoPredstaveniTable(String date, String idFilm, String idKino) throws SQLException {
         String querry = null;
         date = HelperMethods.toStandardDatabaseDateString(date);
         String sql_dotaz = "INSERT INTO predstaveni (Datum, idFilm) values (?, ?);";
         try (Connection connection = HelperMethods.getDBConnection(); PreparedStatement st = connection.prepareStatement(sql_dotaz)) {
             st.setObject(1, date);
             st.setObject(2, idFilm);
+            st.setObject(3, idKino);
             querry = st.toString().split(": ")[1];
             System.out.println(querry);
             st.execute();

@@ -1,7 +1,6 @@
 package webserver;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -17,7 +16,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +39,7 @@ public class Webserver {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
+
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
             server.createContext("/", new RootHandler());
@@ -54,11 +52,11 @@ public class Webserver {
             Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public static class RootHandler implements HttpHandler {
-        
+
         @Override
-        
+
         public void handle(HttpExchange he) throws IOException {
             String response = "<h1>Server start success if you see this message</h1>" + "<h1>Port: " + "9000" + "</h1> <br><button onclick=\"loadDoc()\">Click me</button>\n"
                     + "\n";
@@ -67,11 +65,11 @@ public class Webserver {
             os.write(response.getBytes());
             os.close();
         }
-        
+
     }
-    
+
     public static class EchoHeaderHandler implements HttpHandler {
-        
+
         @Override
         public void handle(HttpExchange he) throws IOException {
             Headers headers = he.getRequestHeaders();
@@ -86,11 +84,11 @@ public class Webserver {
             os.close();
         }
     }
-    
+
     public static class EchoGetHandler implements HttpHandler {
-        
+
         @Override
-        
+
         public void handle(HttpExchange he) throws IOException {
             String sqlquerry = "SELECT * FROM film where ";
             // parse request
@@ -124,15 +122,15 @@ public class Webserver {
             Gson gson = new Gson();
             String json = "";
             switch ((String) values[0]) {
-                
+
                 case "selectall":
                     String sqldotaz1 = "SELECT * FROM film";
                     ArrayList<Object[]> data1 = getData(sqldotaz1);
-                    
+
                     String[] columnames1 = getColumnnames(sqldotaz1);
                     Object[][] array = resultOfQuerryWithHeadings(data1, columnames1);
                     json = gson.toJson(array);
-                    
+
                     break;
                 case "selectone":
                     String sqldotaz2 = "SELECT * FROM film";
@@ -143,136 +141,123 @@ public class Webserver {
                     } catch (SQLException ex) {
                         Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    
+
                     json = gson.toJson(data2);
-                    
+
                     break;
                 default:
-                    
+
                     break;
-                
+
             }
             sendResponse(he, json);
         }
     }
-    
+
     public static class EchoPostHandler implements HttpHandler {
-        
+
         @Override
-        
+
         public void handle(HttpExchange he) throws IOException {
-            // parse request
-            LinkedHashMap<String, Object> parameters = new LinkedHashMap<String, Object>();
-            InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
-            BufferedReader br = new BufferedReader(isr);
-            String query = br.readLine();
-            parseQuery(query, parameters);
-            String[] keys = new String[parameters.size()];
-            Object[] values = new Object[parameters.size()];
-            int index = 0;
-            for (Map.Entry<String, Object> mapEntry : parameters.entrySet()) {
-                values[index] = mapEntry.getValue();
-                index++;
-            }
-            
-            Gson gson = new Gson();
-            String json = "";
-            switch ((String) values[0]) {
-                
-                case "selectall":
-                    CachedRowSet crs = null;
-                    ArrayList<Object[]> data1 = null;
-                    try {
-                        crs = PrepareStatement.executeSelectAllDataFromTable((String) values[1]);
-                        data1 = DataFromDatabase.extractDataToArrayListFromCRS(crs);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
-                    String[] columnames1 = getColumnnames(crs);
-                    Object[][] array = resultOfQuerryWithHeadings(data1, columnames1);
-                    json = gson.toJson(array);
-                    
-                    break;
-                
-                case "selectone":
-                    String sqldotaz2 = "SELECT * FROM " + values[1];
-                    ArrayList<Object[]> data2 = null;
-                    String[] columnames2 = getColumnnames(sqldotaz2);
-                    try {
-                        data2 = DataFromDatabase.extractDataToArrayListFromCRS(PrepareStatement.executeSelectDatabySelectedValue(columnames2, (String) values[1], (String) values[2], (String) values[3]));
-                    } catch (SQLException ex) {
-                        Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
-                    json = gson.toJson(data2);
-                    
-                    break;
-                
-                case "selectdates":
-                    String sqldotaz3 = "SELECT " + values[1] + " FROM " + values[2];
-                    ArrayList<Object[]> data3 = null;
-                    String[] columnames3 = getColumnnames(sqldotaz3);
-                    try {
-                        data3 = DataFromDatabase.extractDataToArrayListFromCRS(PrepareStatement.executeSelectAllDates(columnames3, (String) values[2]));
-                    } catch (SQLException ex) {
-                        Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    String[] dates = datesToArray(data3);
-                    TreeSet<String> str2 = selectAndSortDistinctDates(dates);
-                    json = gson.toJson(str2);
-                    
-                    break;
-                
-                case "updaterow":
-                    Object[][] items;
-                    Gson gson1 = new GsonBuilder().create();
-                    items = gson1.fromJson((String) values[2], Object[][].class);
-                    System.out.println(Arrays.deepToString(values));
-                    
-                     {
-                        try {
-                            
-                            json = PrepareStatement.executeBatchUpdateEditedValueInDTB((String) values[1], items, (String) values[4], values[3]);
-                            
-                        } catch (SQLException ex) {
-                            Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                    
-                    json = "update done";
-                    
-                    break;
-                
-                case "deleterow": {
-                    try {
+            try {
+                // parse request
+                LinkedHashMap<String, Object> parameters = new LinkedHashMap<String, Object>();
+                InputStreamReader isr = new InputStreamReader(he.getRequestBody(), "utf-8");
+                BufferedReader br = new BufferedReader(isr);
+                String query = br.readLine();
+                parseQuery(query, parameters);
+                String[] keys = new String[parameters.size()];
+                Object[] values = new Object[parameters.size()];
+                int index = 0;
+                for (Map.Entry<String, Object> mapEntry : parameters.entrySet()) {
+                    values[index] = mapEntry.getValue();
+                    index++;
+                }
+
+                Gson gson = new Gson();
+                String json = "";
+                String sql_dotaz;
+                ArrayList<Object[]> data1 = null;
+                String[] columnames1;
+                switch ((String) values[0]) {
+
+                    case "selectall":
+                        CachedRowSet crs = PrepareStatement.executeSelectAllDataFromTable((String) values[1]);
+                        Object[][] array = resultOfQuerryWithHeadings(DataFromDatabase.extractDataToArrayListFromCRS(crs), getColumnnames(crs));
+                        json = gson.toJson(array);
+                        break;
+
+                    case "selectone":
+                        sql_dotaz = "SELECT * FROM " + values[1];
+                        columnames1 = getColumnnames(sql_dotaz);
+                        data1 = DataFromDatabase.extractDataToArrayListFromCRS(PrepareStatement
+                                .executeSelectDatabySelectedValue(columnames1, (String) values[1], (String) values[2], (String) values[3]));
+                        json = gson.toJson(data1);
+                        break;
+
+                    case "selectdates":
+                        sql_dotaz = "SELECT " + values[1] + " FROM " + values[2];
+                        columnames1 = getColumnnames(sql_dotaz);
+                        data1 = DataFromDatabase.extractDataToArrayListFromCRS(PrepareStatement.executeSelectAllDates(columnames1, (String) values[2]));
+                        //String[] dates = datesToArray(data1);
+                        TreeSet<String> str2 = selectAndSortDistinctDates(datesToArray(data1));
+                        json = gson.toJson(str2);
+                        break;
+
+                    case "updaterow":
+                        Object[][] items;
+                        //   Gson gson1 = new GsonBuilder().create();
+                        items = gson.fromJson((String) values[2], Object[][].class);
+                        // System.out.println(Arrays.deepToString(values));
+                        PrepareStatement.executeBatchUpdateEditedValueInDTB((String) values[1], items, (String) values[4], values[3]);
+                        json = "update done";
+                        break;
+
+                    case "deleterow":
                         if ("film".equals((String) values[1])) {
                             PrepareStatement.executeDeleteidFilmFromPredstaveni(values[2]);
                         } else if ("kino".equals((String) values[1])) {
                             PrepareStatement.executeDeleteidKinoFromPredstaveni(values[2]);
                         }
                         PrepareStatement.executeDeleteSelectedRows((String) values[1], (String) values[3], values[2]);
+                        json = "row deleted";
+                        break;
                         
-                    } catch (SQLException ex) {
-                        Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    case "insertrow":
+                        String[] inserts = gson.fromJson((String) values[2], String[].class);
+
+                        switch ((String) values[1]) {
+
+                            case "film":
+                                PrepareStatement.executeInsertNewItemIntoFilmTable(inserts[0], inserts[1], inserts[2], inserts[3]);
+                                json = "row inserted";
+                                break;
+                            case "predstaveni":
+                                PrepareStatement.executeInsertNewItemIntoPredstaveniTable(inserts[0], inserts[1], inserts[2]);
+                                json = "row inserted";
+                                break;
+                            case "kino":
+                                PrepareStatement.executeInsertNewItemIntoKinoTable(inserts[0], inserts[1], inserts[2], inserts[3], inserts[4], inserts[5]);
+                                json = "row inserted";
+                            default:
+
+                                break;
+                        }
+                        break;
+                    default:
+
+                        break;
+
                 }
-                
-                json = "row deleted";
-                
-                break;
-                
-                default:
-                    
-                    break;
-                
+                sendResponse(he, json);
+            } catch (SQLException ex) {
+                Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
             }
-            sendResponse(he, json);
         }
     }
-    
+
     private static void parseQuery(String query, LinkedHashMap<String, Object> parameters) throws UnsupportedEncodingException {
-        
+
         if (query != null) {
             String pairs[] = query.split("[&]");
             //  System.out.println(Arrays.toString(pairs));
@@ -285,18 +270,18 @@ public class Webserver {
                     key = URLDecoder.decode(param[0],
                             System.getProperty("file.encoding"));
                 }
-                
+
                 if (param.length > 1) {
                     value = URLDecoder.decode(param[1],
                             System.getProperty("file.encoding"));
                 }
-                
+
                 if (parameters.containsKey(key)) {
                     Object obj = parameters.get(key);
                     if (obj instanceof List<?>) {
                         List<String> values = (List<String>) obj;
                         values.add(value);
-                        
+
                     } else if (obj instanceof String) {
                         List<String> values = new ArrayList<String>();
                         values.add((String) obj);
@@ -309,7 +294,7 @@ public class Webserver {
             }
         }
     }
-    
+
     private static Object[][] resultOfQuerryWithHeadings(ArrayList<Object[]> data, String[] columnames) {
         Object[][] array = new Object[data.size() + 1][data.get(0).length];
         for (int k = 0; k < data.get(0).length; k++) {
@@ -322,7 +307,7 @@ public class Webserver {
         }
         return array;
     }
-    
+
     private static String[] datesToArray(ArrayList<Object[]> data3) {
         String[] dates = new String[data3.size() * data3.get(0).length];
         int counter = 0;
@@ -334,7 +319,7 @@ public class Webserver {
         }
         return dates;
     }
-    
+
     private static TreeSet<String> selectAndSortDistinctDates(String[] dates) {
         Datescomparator comp = new Datescomparator();
         TreeSet<String> str2 = new TreeSet<>(comp);
@@ -342,19 +327,19 @@ public class Webserver {
             str2.add(date);
         }
         return str2;
-        
+
     }
-    
+
     private static String[] getColumnnames(CachedRowSet crs) {
         String[] columnames = DataFromDatabase.getColumnNamesAsArrayFromCRS(crs);
         return columnames;
     }
-    
+
     private static String[] getColumnnames(String sqlquerry) {
         String[] columnames = DataFromDatabase.getColumnNamesAsArray(sqlquerry);
         return columnames;
     }
-    
+
     private static ArrayList<Object[]> getData(String sqlquerry) {
         ArrayList<Object[]> data1 = null;
         try {
@@ -364,7 +349,7 @@ public class Webserver {
         }
         return data1;
     }
-    
+
     private static void sendResponse(HttpExchange he, String json) {
         try {
             String response = json;
@@ -380,6 +365,6 @@ public class Webserver {
         } catch (IOException ex) {
             Logger.getLogger(Webserver.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
 }
